@@ -1,56 +1,41 @@
-//create web server
-const express = require('express');
-const app = express();
-const port = 3000;
+//create Web server
+var http = require('http');
+var fs = require('fs');
+var url = require('url');
+var port = 3000;
 
-//create comments array
-const comments = [
-    { username: 'Tammy', comment: 'lol that is so funny', upvotes: 9 },
-    { username: 'FishBoi', comment: 'Pls like my comment', upvotes: 3 },
-    { username: 'PuppyLuv', comment: 'plz like my comment', upvotes: 7 }
-];
+var server = http.createServer(function(req, res) {
+  var url_parts = url.parse(req.url);
 
-//use express to serve static files
-app.use(express.static('public'));
+  if (url_parts.pathname === '/') {
+    fs.readFile('./index.html', function(error, data) {
+      res.writeHead(200, {
+        'Content-Type': 'text/html'
+      });
+      res.end(data);
+    });
+  } else if (url_parts.pathname === '/comments') {
+    res.writeHead(200, {
+      'Content-Type': 'application/json'
+    });
 
-//create a get route to send comments array
-app.get('/comments', (req, res) => {
-    res.json(comments);
+    var comments = [{
+      name: 'John',
+      message: 'hello'
+    }, {
+      name: 'Jane',
+      message: 'hi'
+    }];
+
+    res.end(JSON.stringify(comments));
+  } else {
+    res.writeHead(404, {
+      'Content-Type': 'text/plain'
+    });
+    res.end('Page not found');
+  }
 });
 
-//create a post route to add a comment to the comments array
-app.post('/comments', (req, res) => {
-    //create a new comment object
-    const newComment = { username: req.query.username, comment: req.query.comment, upvotes: 0 };
-    //add new comment to comments array
-    comments.push(newComment);
-    //send back the new comment
-    res.json(newComment);
-});
-    
-//create a put route to update a comment in the comments array
-app.put('/comments/:id', (req, res) => {
-    //find the comment by id
-    const id = req.params.id;
-    const comment = comments[id];
-    //update the comment
-    comment.username = req.query.username;
-    comment.comment = req.query.comment;
-    //send back the updated comment
-    res.json(comment);
-});
-
-//create a delete route to delete a comment from the comments array
-app.delete('/comments/:id', (req, res) => {
-    //find the comment by id
-    const id = req.params.id;
-    //delete the comment
-    comments.splice(id, 1);
-    //send back the comments array
-    res.json(comments);
-});
-
-//start server
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
+server.listen(port, function() {
+  console.log('server started on port ' + port);
 });
